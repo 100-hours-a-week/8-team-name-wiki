@@ -29,7 +29,7 @@ jobs:
           
           # Discussion 찾기
           DISCUSSION_DATA=$(gh api graphql -f query='
-            query($owner: String!, $repo: String!, $searchQuery: String!) {
+            query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
                 discussions(first: 20, orderBy: {field: CREATED_AT, direction: DESC}) {
                   nodes {
@@ -48,7 +48,7 @@ jobs:
                 }
               }
             }
-          ' -F owner="${{ github.repository_owner }}" -F repo="${{ github.event.repository.name }}" -F searchQuery="$TITLE")
+          ' -F owner="100-hours-a-week" -F repo="8-team-name-wiki")
           
           # Discussion 찾기 및 댓글 파싱
           ISSUE_BODY=$(echo "$DISCUSSION_DATA" | jq -r --arg title "$TITLE" '
