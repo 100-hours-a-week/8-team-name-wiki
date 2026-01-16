@@ -43,4 +43,4 @@ jobs:
           -f repositoryId="${{ github.event.repository.node_id }}" \
           -f categoryId="DIC_kwDOQs9L284C1BSJ" \
           -f title="${{ steps.date.outputs.date }} - 데일리스크럼" \
-          -f body=""
+          -f body=" "
