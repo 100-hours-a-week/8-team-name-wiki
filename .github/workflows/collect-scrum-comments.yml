@@ -27,6 +27,8 @@ jobs:
         run: |
           TITLE="${{ steps.date.outputs.date }} - 데일리스크럼"
           
+          echo "Looking for discussion with title: $TITLE"
+          
           # Discussion 찾기
           DISCUSSION_DATA=$(gh api graphql -f query='
             query($owner: String!, $repo: String!) {
@@ -50,33 +52,42 @@ jobs:
             }
           ' -F owner="100-hours-a-week" -F repo="8-team-name-wiki")
           
+          # 디버깅: 모든 Discussion 제목 출력
+          echo "Found discussions:"
+          echo "$DISCUSSION_DATA" | jq -r '.data.repository.discussions.nodes[].title'
+          
           # Discussion 찾기 및 댓글 파싱
           ISSUE_BODY=$(echo "$DISCUSSION_DATA" | jq -r --arg title "$TITLE" '
             .data.repository.discussions.nodes[] |
             select(.title == $title) |
             "# Daily Scrum - " + $title + "\n\n" +
             (
-              [.comments.nodes[] | 
-                {
-                  author: .author.login,
-                  body: .body
-                }
-              ] |
-              group_by(.author) |
-              map(
-                "## @" + .[0].author + "\n" +
-                (map(.body) | join("\n"))
-              ) |
-              join("\n\n")
+              if (.comments.nodes | length) > 0 then
+                [.comments.nodes[] | 
+                  {
+                    author: .author.login,
+                    body: .body
+                  }
+                ] |
+                group_by(.author) |
+                map(
+                  "## @" + .[0].author + "\n" +
+                  (map(.body) | join("\n\n"))
+                ) |
+                join("\n\n")
+              else
+                "댓글이 없습니다."
+              end
             )
           ')
           
           # 결과가 비어있는지 확인
           if [ -z "$ISSUE_BODY" ] || [ "$ISSUE_BODY" == "null" ]; then
             echo "no_discussion=true" >> $GITHUB_OUTPUT
-            echo "Warning: Discussion not found for $TITLE"
+            echo "Warning: Discussion not found for title: $TITLE"
           else
             echo "no_discussion=false" >> $GITHUB_OUTPUT
+            echo "Found discussion and parsed comments"
             # 멀티라인 출력을 위한 처리
             {
               echo 'body<<EOF'
@@ -84,7 +95,7 @@ jobs:
               echo 'EOF'
             } >> $GITHUB_OUTPUT
           fi
-      
+          
       - name: Create Issue
         if: steps.collect.outputs.no_discussion == 'false'
         env:
