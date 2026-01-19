@@ -1,8 +1,8 @@
 ---
-name: PL-Meeting-Template
+name: PL 미팅
 about: PL 미팅 템플릿
 title: ''
-labels: PL-미팅
+labels: ''
 assignees: ''
 
 ---
